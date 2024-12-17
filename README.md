@@ -9,6 +9,8 @@ Este projeto é uma aplicação web temática baseada no campeonato das casas de
 - Acompanhar estatísticas dos jogadores
 - Seguir resultados das partidas
 - Visualizar simulações de jogos ao vivo
+- Criar seu proprio time
+- Customizar jogadores modificando seus atributos
 
 ## 🎨 Design
 
