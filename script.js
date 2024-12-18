@@ -21,6 +21,66 @@ function viewTeamDetails(teamId) {
     alert(`Detalhes do time ${teamId} serão implementados em breve!`);
 }
 
+// Check authentication status
+async function checkAuth() {
+    const userSection = document.createElement('div');
+    userSection.className = 'user-section';
+    document.querySelector('header').appendChild(userSection);
+
+    if (document.cookie.includes('PHPSESSID')) {
+        userSection.innerHTML = `
+            <span id="username"></span>
+            <button onclick="logout()">Sair</button>
+        `;
+    } else {
+        window.location.href = 'login.php';
+    }
+}
+
+// Logout function
+async function logout() {
+    try {
+        const response = await fetch('/Quadribol/auth/logout', {
+            method: 'POST'
+        });
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            window.location.href = 'login.php';
+        }
+    } catch (error) {
+        console.error('Error logging out:', error);
+    }
+}
+
+// Função para carregar times do banco de dados
+async function loadTeams() {
+    try {
+        const response = await fetch('/Quadribol/teams');
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            const teamList = document.querySelector('.team-list');
+            teamList.innerHTML = ''; // Clear existing teams
+            
+            data.data.forEach(team => {
+                const teamCard = `
+                    <div class="team-card" data-house="${team.name.toLowerCase()}">
+                        <h3>${team.name}</h3>
+                        <img src="https://placeholder.com/150" alt="Escudo ${team.name}">
+                        <p>Vitórias: ${team.wins}</p>
+                        <p>Derrotas: ${team.losses}</p>
+                        <button onclick="viewTeamDetails(${team.id})">Ver Detalhes</button>
+                    </div>
+                `;
+                teamList.innerHTML += teamCard;
+            });
+        }
+    } catch (error) {
+        console.error('Error loading teams:', error);
+    }
+}
+
 // Dados mockados para exemplo
 const mockData = {
     teams: [
@@ -59,9 +119,11 @@ const mockData = {
     ]
 };
 
-// Inicializa a página mostrando a seção de times
+// Inicializa a página
 document.addEventListener('DOMContentLoaded', () => {
+    checkAuth();
     showSection('teams');
+    loadTeams(); // Load teams from database
 });
 
 // Variáveis para o jogo
