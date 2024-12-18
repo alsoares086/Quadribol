@@ -1,11 +1,20 @@
 <?php
 session_start();
 
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 // Define base path
 define('BASE_PATH', __DIR__);
 
 // Include necessary files
 require_once BASE_PATH . '/config/database.php';
+
+// Logger function
+function logError($message) {
+    error_log(date('Y-m-d H:i:s') . " - " . $message . "\n", 3, BASE_PATH . '/error.log');
+}
 
 // Router class to handle routing
 class Router {
@@ -13,8 +22,13 @@ class Router {
     private $db;
 
     public function __construct() {
-        $database = new Database();
-        $this->db = $database->getConnection();
+        try {
+            $database = new Database();
+            $this->db = $database->getConnection();
+            logError("Database connection established");
+        } catch (Exception $e) {
+            logError("Database connection error: " . $e->getMessage());
+        }
     }
 
     public function add($method, $path, $handler, $auth = false) {
@@ -27,15 +41,24 @@ class Router {
     }
 
     public function handle($method, $path) {
+        logError("Handling request: $method $path");
+        
         foreach ($this->routes as $route) {
             if ($route['method'] === $method && $route['path'] === $path) {
                 if ($route['auth'] && !$this->isAuthenticated()) {
-                    header('Location: /Quadribol/login.php');
+                    logError("Authentication required for $path");
+                    header('Location: /Quadribol/login.html');
                     exit;
                 }
-                return $route['handler']($this->db);
+                try {
+                    return $route['handler']($this->db);
+                } catch (Exception $e) {
+                    logError("Error in route handler: " . $e->getMessage());
+                    return json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+                }
             }
         }
+        logError("Route not found: $path");
         return $this->notFound();
     }
 
@@ -45,7 +68,7 @@ class Router {
 
     private function notFound() {
         header("HTTP/1.0 404 Not Found");
-        echo json_encode(['status' => 'error', 'message' => 'Route not found']);
+        return json_encode(['status' => 'error', 'message' => 'Route not found']);
     }
 }
 
@@ -54,9 +77,13 @@ $router = new Router();
 
 // Auth routes
 $router->add('POST', '/auth/register', function($db) {
+    logError("Processing registration request");
+    
     $data = json_decode(file_get_contents("php://input"));
+    logError("Registration data received: " . json_encode($data));
     
     if (empty($data->username) || empty($data->email) || empty($data->password)) {
+        logError("Missing required fields in registration");
         return json_encode(['status' => 'error', 'message' => 'Missing required fields']);
     }
 
@@ -69,17 +96,27 @@ $router->add('POST', '/auth/register', function($db) {
         $stmt->bindParam(":password", $hashedPassword);
         
         if ($stmt->execute()) {
+            logError("User registered successfully: " . $data->email);
             return json_encode(['status' => 'success', 'message' => 'User registered successfully']);
         }
     } catch(PDOException $e) {
-        return json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        logError("Registration error: " . $e->getMessage());
+        // Check for duplicate entry
+        if ($e->getCode() == 23000) {
+            return json_encode(['status' => 'error', 'message' => 'Email or username already exists']);
+        }
+        return json_encode(['status' => 'error', 'message' => 'Registration failed']);
     }
 });
 
 $router->add('POST', '/auth/login', function($db) {
+    logError("Processing login request");
+    
     $data = json_decode(file_get_contents("php://input"));
+    logError("Login data received: " . json_encode($data));
     
     if (empty($data->email) || empty($data->password)) {
+        logError("Missing required fields in login");
         return json_encode(['status' => 'error', 'message' => 'Missing required fields']);
     }
     
@@ -94,47 +131,61 @@ $router->add('POST', '/auth/login', function($db) {
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['role'] = $user['role'];
                 
+                logError("Login successful: " . $data->email);
                 return json_encode(['status' => 'success', 'message' => 'Login successful']);
             }
         }
         
+        logError("Invalid login credentials: " . $data->email);
         return json_encode(['status' => 'error', 'message' => 'Invalid credentials']);
     } catch(PDOException $e) {
-        return json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        logError("Login error: " . $e->getMessage());
+        return json_encode(['status' => 'error', 'message' => 'Login failed']);
     }
 });
 
 $router->add('POST', '/auth/logout', function($db) {
     session_destroy();
+    logError("User logged out");
     return json_encode(['status' => 'success', 'message' => 'Logged out successfully']);
 });
 
 // Protected routes (require authentication)
 $router->add('GET', '/teams', function($db) {
+    logError("Processing teams request");
+    
     try {
         $stmt = $db->prepare("SELECT * FROM teams");
         $stmt->execute();
         $teams = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
+        logError("Teams data retrieved successfully");
         return json_encode(['status' => 'success', 'data' => $teams]);
     } catch(PDOException $e) {
-        return json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        logError("Teams data retrieval error: " . $e->getMessage());
+        return json_encode(['status' => 'error', 'message' => 'Failed to retrieve teams data']);
     }
 }, true);
 
 $router->add('GET', '/players', function($db) {
+    logError("Processing players request");
+    
     try {
         $stmt = $db->prepare("SELECT p.*, t.name as team_name FROM players p LEFT JOIN teams t ON p.team_id = t.id");
         $stmt->execute();
         $players = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
+        logError("Players data retrieved successfully");
         return json_encode(['status' => 'success', 'data' => $players]);
     } catch(PDOException $e) {
-        return json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        logError("Players data retrieval error: " . $e->getMessage());
+        return json_encode(['status' => 'error', 'message' => 'Failed to retrieve players data']);
     }
 }, true);
 
 $router->add('GET', '/matches', function($db) {
+    logError("Processing matches request");
+    
     try {
         $stmt = $db->prepare("
             SELECT m.*, 
@@ -149,9 +200,11 @@ $router->add('GET', '/matches', function($db) {
         $stmt->execute();
         $matches = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
+        logError("Matches data retrieved successfully");
         return json_encode(['status' => 'success', 'data' => $matches]);
     } catch(PDOException $e) {
-        return json_encode(['status' => 'error', 'message' => $e->getMessage()]);
+        logError("Matches data retrieval error: " . $e->getMessage());
+        return json_encode(['status' => 'error', 'message' => 'Failed to retrieve matches data']);
     }
 }, true);
 
@@ -159,6 +212,8 @@ $router->add('GET', '/matches', function($db) {
 $method = $_SERVER['REQUEST_METHOD'];
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $path = str_replace('/Quadribol', '', $path);
+
+logError("Incoming request: $method $path");
 
 header('Content-Type: application/json');
 echo $router->handle($method, $path);

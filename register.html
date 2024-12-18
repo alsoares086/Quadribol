@@ -154,6 +154,8 @@
                 email: document.getElementById('email').value,
                 password: password
             };
+
+            console.log('Sending registration data:', formData); // Debug log
             
             try {
                 const response = await fetch('/Quadribol/auth/register', {
@@ -165,13 +167,14 @@
                 });
                 
                 const data = await response.json();
+                console.log('Server response:', data); // Debug log
                 
                 if (data.status === 'success') {
                     alert('Registro realizado com sucesso! Faça login para continuar.');
                     window.location.href = 'login.html';
                 } else {
                     errorMessage.style.display = 'block';
-                    errorMessage.textContent = data.message;
+                    errorMessage.textContent = data.message || 'Erro ao registrar. Tente novamente.';
                 }
             } catch (error) {
                 console.error('Error:', error);
