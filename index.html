@@ -8,79 +8,21 @@
 </head>
 <body>
     <header>
-        <h1>WizardCup</h1>
-        <nav>
-            <button onclick="showSection('teams')">Times</button>
-            <button onclick="showSection('players')">Jogadores</button>
-            <button onclick="showSection('matches')">Partidas</button>
-        </nav>
+        <h1>WizardCup - Quadribol Manager</h1>
     </header>
 
     <main>
-        <section id="teams" class="active">
-            <h2>Times de Quadribol</h2>
-            <div class="team-list">
-                <div class="team-card">
-                    <h3>Grifinória</h3>
-                    <img src="https://placeholder.com/150" alt="Escudo Grifinória">
-                    <p>Vitórias: 10</p>
-                    <p>Derrotas: 2</p>
-                    <button onclick="viewTeamDetails('gryffindor')">Ver Detalhes</button>
-                </div>
-                <div class="team-card">
-                    <h3>Sonserina</h3>
-                    <img src="https://placeholder.com/150" alt="Escudo Sonserina">
-                    <p>Vitórias: 8</p>
-                    <p>Derrotas: 4</p>
-                    <button onclick="viewTeamDetails('slytherin')">Ver Detalhes</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="players">
-            <h2>Jogadores</h2>
-            <div class="player-list">
-                <div class="player-card">
-                    <h3>Harry Potter</h3>
-                    <p>Posição: Apanhador</p>
-                    <p>Time: Grifinória</p>
-                    <div class="stats">
-                        <div>Agilidade: 95</div>
-                        <div>Força: 75</div>
-                        <div>Velocidade: 90</div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="matches">
-            <h2>Próximas Partidas</h2>
-            <div class="match-list">
-                <div class="match-card">
-                    <div class="match-teams">
-                        <span>Grifinória</span>
-                        <span>vs</span>
-                        <span>Sonserina</span>
-                    </div>
-                    <p>Data: 15/12/2023</p>
-                    <button class="match-button" onclick="startMatch()">Assistir Partida</button>
-                </div>
-            </div>
-            
-            <!-- Nova área para simulação do jogo -->
-            <div id="game-simulation" style="display: none;">
-                <div id="score-board">
-                    <div>Grifinória: <span id="score-team1">0</span></div>
-                    <div>Sonserina: <span id="score-team2">0</span></div>
-                </div>
-                <div id="game-field">
-                    <canvas id="game-canvas" width="600" height="400"></canvas>
-                </div>
-                <div id="game-commentary"></div>
-            </div>
+        <section>
+            <h2>Selecione uma opção:</h2>
+            <nav>
+                <ul>
+                    <li><a href="/login">Login</a></li>
+                    <li><a href="/register">Registrar</a></li>
+                </ul>
+            </nav>
         </section>
     </main>
 
-    <script src="script.js"></script>
+    <!--<script src="script.js"></script>-->
 </body>
 </html>
